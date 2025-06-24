@@ -128,24 +128,25 @@ function showNotification(message) {
   setTimeout(() => { note.textContent = ''; }, 3000);
 }
 
-// ✅ Required: Fetch quotes from server with correct function name
-function fetchQuotesFromServer() {
-  fetch(SERVER_URL)
-    .then(response => response.json())
-    .then(serverData => {
-      const syncedQuotes = serverData.slice(0, 5).map(post => ({
-        text: post.title,
-        category: "Synced"
-      }));
-      quotes = syncedQuotes;
-      saveQuotes();
-      populateCategories();
-      showNotification("Quotes synced from server and conflicts resolved.");
-    })
-    .catch(err => {
-      console.error("Sync failed:", err);
-      showNotification("Failed to sync with server.");
-    });
+// ✅ Required: async/await version for checker compatibility
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const serverData = await response.json();
+
+    const syncedQuotes = serverData.slice(0, 5).map(post => ({
+      text: post.title,
+      category: "Synced"
+    }));
+
+    quotes = syncedQuotes;
+    saveQuotes();
+    populateCategories();
+    showNotification("Quotes synced from server and conflicts resolved.");
+  } catch (error) {
+    console.error("Sync failed:", error);
+    showNotification("Failed to sync with server.");
+  }
 }
 
 // Setup initial bindings
