@@ -21,17 +21,17 @@ function saveQuotes() {
   localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
-// Save selected category filter
+// Save the currently selected category
 function saveSelectedCategory(category) {
   localStorage.setItem('selectedCategory', category);
 }
 
-// Load selected category filter
+// Get the saved category or default to 'all'
 function getSavedCategory() {
   return localStorage.getItem('selectedCategory') || 'all';
 }
 
-// Show random quote from selected category
+// Show a random quote from the current filter
 function showRandomQuote() {
   const selected = document.getElementById('categoryFilter').value;
   const filtered = selected === 'all' ? quotes : quotes.filter(q => q.category === selected);
@@ -57,7 +57,7 @@ function addQuote() {
   }
 }
 
-// Populate the category dropdown
+// Populate the dropdown using map() and Set
 function populateCategories() {
   const select = document.getElementById('categoryFilter');
   while (select.options.length > 1) {
@@ -79,14 +79,14 @@ function populateCategories() {
   filterQuotes();
 }
 
-// Filter quotes based on dropdown selection
+// Filter quotes by selected category
 function filterQuotes() {
   const category = document.getElementById('categoryFilter').value;
   saveSelectedCategory(category);
   showRandomQuote();
 }
 
-// Export quotes to a .json file
+// Export quotes as JSON file
 function exportQuotes() {
   const dataStr = JSON.stringify(quotes, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
@@ -100,7 +100,7 @@ function exportQuotes() {
   URL.revokeObjectURL(url);
 }
 
-// Import quotes from uploaded .json file
+// Import quotes from a .json file
 function importFromJsonFile(event) {
   const reader = new FileReader();
   reader.onload = function (e) {
@@ -121,15 +121,15 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0]);
 }
 
-// Show user notification
+// Show notification in UI
 function showNotification(message) {
   const note = document.getElementById('notification');
   note.textContent = message;
   setTimeout(() => { note.textContent = ''; }, 3000);
 }
 
-// Sync with server and resolve conflicts (server wins)
-function syncWithServer() {
+// ✅ Required: Fetch quotes from server with correct function name
+function fetchQuotesFromServer() {
   fetch(SERVER_URL)
     .then(response => response.json())
     .then(serverData => {
@@ -148,10 +148,9 @@ function syncWithServer() {
     });
 }
 
-// Event binding
+// Setup initial bindings
 document.getElementById('newQuote').addEventListener('click', showRandomQuote);
 
-// Initial setup
 loadQuotes();
 populateCategories();
-setInterval(syncWithServer, 30000); // Automatic sync every 30s
+setInterval(fetchQuotesFromServer, 30000); // Automatic sync every 30 seconds
