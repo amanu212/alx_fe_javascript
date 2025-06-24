@@ -178,3 +178,7 @@ document.getElementById('newQuote').addEventListener('click', showRandomQuote);
 loadQuotes();
 populateCategories();
 setInterval(fetchQuotesFromServer, 30000); // Auto sync every 30s
+
+function syncQuotes() {
+  fetchQuotesFromServer(); // This already does the async fetch + conflict resolution
+}
