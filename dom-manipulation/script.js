@@ -1,90 +1,94 @@
-// Initialize quotes array
 let quotes = [];
 
-// Load quotes from localStorage if they exist
+// Load from localStorage
 function loadQuotes() {
   const stored = localStorage.getItem('quotes');
   if (stored) {
     quotes = JSON.parse(stored);
   } else {
     quotes = [
-      { text: "Believe in yourself and all that you are.", category: "Motivation" },
-      { text: "The only way to do great work is to love what you do.", category: "Work" },
-      { text: "In the middle of every difficulty lies opportunity.", category: "Inspiration" }
+      { text: "Believe in yourself.", category: "Motivation" },
+      { text: "Work hard in silence.", category: "Discipline" },
+      { text: "Never stop learning.", category: "Education" }
     ];
   }
 }
 
-// Save quotes to localStorage
+// Save to localStorage
 function saveQuotes() {
   localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
-// Show a random quote
+// Save selected category filter
+function saveSelectedCategory(category) {
+  localStorage.setItem('selectedCategory', category);
+}
+
+// Load selected category filter
+function getSavedCategory() {
+  return localStorage.getItem('selectedCategory') || 'all';
+}
+
+// Display random quote from current filter
 function showRandomQuote() {
-  if (quotes.length === 0) return;
-  const randomIndex = Math.floor(Math.random() * quotes.length);
-  const quote = quotes[randomIndex];
+  const selected = document.getElementById('categoryFilter').value;
+  const filtered = selected === 'all' ? quotes : quotes.filter(q => q.category === selected);
+  if (filtered.length === 0) return;
+  const quote = filtered[Math.floor(Math.random() * filtered.length)];
   document.getElementById('quoteDisplay').innerHTML = `"${quote.text}" — [${quote.category}]`;
 }
 
-// Add a new quote
+// Add new quote
 function addQuote() {
-  const textInput = document.getElementById('newQuoteText');
-  const categoryInput = document.getElementById('newQuoteCategory');
-
-  const text = textInput.value.trim();
-  const category = categoryInput.value.trim();
+  const text = document.getElementById('newQuoteText').value.trim();
+  const category = document.getElementById('newQuoteCategory').value.trim();
 
   if (text && category) {
-    quotes.push({ text: text, category: category });
+    quotes.push({ text, category });
     saveQuotes();
+    populateCategories();
     showRandomQuote();
-    textInput.value = '';
-    categoryInput.value = '';
+    document.getElementById('newQuoteText').value = '';
+    document.getElementById('newQuoteCategory').value = '';
   } else {
     alert("Please fill in both fields.");
   }
 }
 
-// Dynamically create the form to add quotes
-function createAddQuoteForm() {
-  const formContainer = document.createElement('div');
+// Populate category dropdown
+function populateCategories() {
+  const select = document.getElementById('categoryFilter');
+  const existing = new Set();
 
-  const textInput = document.createElement('input');
-  textInput.id = 'newQuoteText';
-  textInput.type = 'text';
-  textInput.placeholder = 'Enter a new quote';
+  // Clear all except 'All'
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
 
-  const categoryInput = document.createElement('input');
-  categoryInput.id = 'newQuoteCategory';
-  categoryInput.type = 'text';
-  categoryInput.placeholder = 'Enter quote category';
+  quotes.forEach(q => {
+    if (!existing.has(q.category)) {
+      existing.add(q.category);
+      const opt = document.createElement('option');
+      opt.value = q.category;
+      opt.textContent = q.category;
+      select.appendChild(opt);
+    }
+  });
 
-  const addButton = document.createElement('button');
-  addButton.textContent = 'Add Quote';
-  addButton.onclick = addQuote;
-
-  const exportButton = document.createElement('button');
-  exportButton.textContent = 'Export Quotes';
-  exportButton.onclick = exportQuotes;
-
-  const importInput = document.createElement('input');
-  importInput.type = 'file';
-  importInput.accept = '.json';
-  importInput.id = 'importFile';
-  importInput.onchange = importFromJsonFile;
-
-  formContainer.appendChild(textInput);
-  formContainer.appendChild(categoryInput);
-  formContainer.appendChild(addButton);
-  formContainer.appendChild(exportButton);
-  formContainer.appendChild(importInput);
-
-  document.body.appendChild(formContainer);
+  // Reapply last filter
+  const saved = getSavedCategory();
+  select.value = saved;
+  filterQuotes();
 }
 
-// Export quotes as JSON
+// Filter and display a quote
+function filterQuotes() {
+  const category = document.getElementById('categoryFilter').value;
+  saveSelectedCategory(category);
+  showRandomQuote();
+}
+
+// Export quotes to JSON
 function exportQuotes() {
   const dataStr = JSON.stringify(quotes, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
@@ -100,27 +104,28 @@ function exportQuotes() {
 
 // Import quotes from JSON file
 function importFromJsonFile(event) {
-  const fileReader = new FileReader();
-  fileReader.onload = function (event) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
     try {
-      const importedQuotes = JSON.parse(event.target.result);
-      if (Array.isArray(importedQuotes)) {
-        quotes.push(...importedQuotes);
+      const imported = JSON.parse(e.target.result);
+      if (Array.isArray(imported)) {
+        quotes.push(...imported);
         saveQuotes();
-        alert('Quotes imported successfully!');
+        populateCategories();
+        alert('Quotes imported!');
       } else {
-        alert('Invalid JSON format.');
+        alert('Invalid file format.');
       }
-    } catch (e) {
-      alert('Error parsing file.');
+    } catch {
+      alert('Error reading file.');
     }
   };
-  fileReader.readAsText(event.target.files[0]);
+  reader.readAsText(event.target.files[0]);
 }
 
-// Set up event listener and init
+// Event binding
 document.getElementById('newQuote').addEventListener('click', showRandomQuote);
 
-// Run at startup
+// App start
 loadQuotes();
-createAddQuoteForm();
+populateCategories();
