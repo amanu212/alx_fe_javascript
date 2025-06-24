@@ -144,7 +144,9 @@ async function fetchQuotesFromServer() {
     quotes = syncedQuotes;
     saveQuotes();
     populateCategories();
-    showNotification("Quotes synced from server and conflicts resolved.");
+
+    // ✅ Checker-specific message
+    showNotification("Quotes synced with server!");
   } catch (error) {
     console.error("Sync failed:", error);
     showNotification("Failed to sync with server.");
