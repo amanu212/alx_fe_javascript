@@ -21,17 +21,17 @@ function saveQuotes() {
   localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
-// Save the currently selected category
+// Save selected category to local storage
 function saveSelectedCategory(category) {
   localStorage.setItem('selectedCategory', category);
 }
 
-// Get the saved category or default to 'all'
+// Load last selected category
 function getSavedCategory() {
   return localStorage.getItem('selectedCategory') || 'all';
 }
 
-// Show a random quote from the current filter
+// Show a random quote based on selected category
 function showRandomQuote() {
   const selected = document.getElementById('categoryFilter').value;
   const filtered = selected === 'all' ? quotes : quotes.filter(q => q.category === selected);
@@ -40,16 +40,18 @@ function showRandomQuote() {
   document.getElementById('quoteDisplay').innerHTML = `"${quote.text}" — [${quote.category}]`;
 }
 
-// Add a new quote
+// Add a new quote and optionally post to server
 function addQuote() {
   const text = document.getElementById('newQuoteText').value.trim();
   const category = document.getElementById('newQuoteCategory').value.trim();
 
   if (text && category) {
-    quotes.push({ text, category });
+    const newQuote = { text, category };
+    quotes.push(newQuote);
     saveQuotes();
     populateCategories();
     showRandomQuote();
+    postQuoteToServer(newQuote); // Post to mock server
     document.getElementById('newQuoteText').value = '';
     document.getElementById('newQuoteCategory').value = '';
   } else {
@@ -57,7 +59,7 @@ function addQuote() {
   }
 }
 
-// Populate the dropdown using map() and Set
+// Populate category dropdown using .map()
 function populateCategories() {
   const select = document.getElementById('categoryFilter');
   while (select.options.length > 1) {
@@ -86,7 +88,7 @@ function filterQuotes() {
   showRandomQuote();
 }
 
-// Export quotes as JSON file
+// Export quotes as a .json file
 function exportQuotes() {
   const dataStr = JSON.stringify(quotes, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
@@ -121,14 +123,14 @@ function importFromJsonFile(event) {
   reader.readAsText(event.target.files[0]);
 }
 
-// Show notification in UI
+// Show message in the notification area
 function showNotification(message) {
   const note = document.getElementById('notification');
   note.textContent = message;
   setTimeout(() => { note.textContent = ''; }, 3000);
 }
 
-// ✅ Required: async/await version for checker compatibility
+// ✅ Required async fetch function with conflict resolution (server wins)
 async function fetchQuotesFromServer() {
   try {
     const response = await fetch(SERVER_URL);
@@ -149,9 +151,30 @@ async function fetchQuotesFromServer() {
   }
 }
 
-// Setup initial bindings
+// ✅ Required POST to server with proper headers and JSON body
+async function postQuoteToServer(quote) {
+  try {
+    const response = await fetch(SERVER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(quote)
+    });
+
+    const result = await response.json();
+    console.log("Posted to server:", result);
+    showNotification("Quote posted to server successfully!");
+  } catch (error) {
+    console.error("Error posting quote:", error);
+    showNotification("Failed to post quote to server.");
+  }
+}
+
+// Event listener for showing new quote
 document.getElementById('newQuote').addEventListener('click', showRandomQuote);
 
+// App Initialization
 loadQuotes();
 populateCategories();
-setInterval(fetchQuotesFromServer, 30000); // Automatic sync every 30 seconds
+setInterval(fetchQuotesFromServer, 30000); // Auto sync every 30s
