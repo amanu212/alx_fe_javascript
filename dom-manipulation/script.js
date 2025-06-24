@@ -58,24 +58,24 @@ function addQuote() {
 // Populate category dropdown
 function populateCategories() {
   const select = document.getElementById('categoryFilter');
-  const existing = new Set();
 
-  // Clear all except 'All'
+  // Clear all except the "All Categories" option
   while (select.options.length > 1) {
     select.remove(1);
   }
 
-  quotes.forEach(q => {
-    if (!existing.has(q.category)) {
-      existing.add(q.category);
-      const opt = document.createElement('option');
-      opt.value = q.category;
-      opt.textContent = q.category;
-      select.appendChild(opt);
-    }
+  // ✅ Use map() to extract categories
+  const categories = quotes.map(q => q.category);
+  const uniqueCategories = [...new Set(categories)];
+
+  uniqueCategories.forEach(category => {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category;
+    select.appendChild(option);
   });
 
-  // Reapply last filter
+  // Reapply saved filter
   const saved = getSavedCategory();
   select.value = saved;
   filterQuotes();
